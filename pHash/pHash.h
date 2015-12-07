@@ -244,7 +244,7 @@ int ph_dct(const Features &fv, Digest &digest);
  *  /return - int value - 1 (true) for same, 0 (false) for different, < 0 for error
  */
 
-int ph_crosscorr(const Digest &x,const Digest &y,double &pcc, double threshold = 0.90);
+__declspec(dllexport) int ph_crosscorr(const Digest &x, const Digest &y, double &pcc, double threshold = 0.90);
 
 /*! /brief image digest
  *  Compute the image digest for an image given the input image
@@ -255,7 +255,7 @@ int ph_crosscorr(const Digest &x,const Digest &y,double &pcc, double threshold =
  *  /param N      - int value for the number of angles to consider. 
  *  /return       - less than 0 for error
  */
-int _ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest &digest,int N=180);
+__declspec(dllexport) int _ph_image_digest(const CImg<uint8_t> &img, double sigma, double gamma, Digest &digest, int N = 180);
 
 /*! /brief image digest
  *  Compute the image digest given the file name.
@@ -265,7 +265,7 @@ int _ph_image_digest(const CImg<uint8_t> &img,double sigma, double gamma,Digest 
  *  /param digest - Digest struct
  *  /param N      - int value for number of angles to consider
  */
-int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest,int N=180);
+__declspec(dllexport) int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest, int N = 180);
 
 
 /*! /brief compare 2 images
@@ -278,7 +278,7 @@ int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest
  *  /param theshold - double value for the threshold
  *  /return int 0 (false) for different images, 1 (true) for same image, less than 0 for error
  */
-int _ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &pcc, double sigma = 3.5, double gamma = 1.0,int N=180,double threshold=0.90);
+__declspec(dllexport) int _ph_compare_images(const CImg<uint8_t> &imA, const CImg<uint8_t> &imB, double &pcc, double sigma = 3.5, double gamma = 1.0, int N = 180, double threshold = 0.90);
 
 /*! /brief compare 2 images
  *  Compare 2 images given the file names
@@ -290,7 +290,7 @@ int _ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double 
  *  /param N     - int number for number of angles
  *  /return int 0 (false) for different image, 1 (true) for same images, less than 0 for error
  */
-int ph_compare_images(const char *file1, const char *file2,double &pcc, double sigma = 3.5, double gamma=1.0, int N=180,double threshold=0.90);
+__declspec(dllexport) int ph_compare_images(const char *file1, const char *file2, double &pcc, double sigma = 3.5, double gamma = 1.0, int N = 180, double threshold = 0.90);
 
 /*! /brief return dct matrix, C
  *  Return DCT matrix of sqare size, N
@@ -304,7 +304,7 @@ static CImg<float>* ph_dct_matrix(const int N);
  *  /param hash of type ulong64 (must be 64-bit variable)
  *  /return int value - -1 for failure, 1 for success
  */
-int ph_dct_imagehash(const char* file,ulong64 &hash);
+__declspec(dllexport) int ph_dct_imagehash(const char* file, ulong64 &hash);
 
 int ph_bmb_imagehash(const char *file, uint8_t method, BinHash **ret_hash);
 #endif
@@ -330,7 +330,7 @@ double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int
  *   /return int value - less than 0 for error
  */
 #ifdef HAVE_IMAGE_HASH
-int ph_hamming_distance(const ulong64 hash1,const ulong64 hash2);
+__declspec(dllexport) int ph_hamming_distance(const ulong64 hash1, const ulong64 hash2);
 
 /** /brief create a list of datapoint's directly from a directory of image files
  *  /param dirname - path and name of directory containg all image file names
