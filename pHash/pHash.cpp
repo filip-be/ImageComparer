@@ -314,36 +314,51 @@ int ph_image_digest(const char *file, double sigma, double gamma, Digest &digest
     return res;
 }
 
-int _ph_compare_images(const CImg<uint8_t> &imA,const CImg<uint8_t> &imB,double &pcc, double sigma, double gamma,int N,double threshold){
+int _ph_compare_images(CImg<uint8_t> &imA, CImg<uint8_t> &imB, double &pcc, bool allowSimpleRotation,
+	double sigma, double gamma, int N, double threshold){
+	int result = 0;
 
-    int result = 0;
-    Digest digestA;
-    if (_ph_image_digest(imA,sigma,gamma,digestA,N) < 0)
-        goto cleanup;
+	pcc = 0;
+	for (int rotationNumber = 0; rotationNumber < 4; rotationNumber++)
+	{
+		Digest digestA;
+		if (_ph_image_digest(imA, sigma, gamma, digestA, N) < 0)
+			goto cleanup;
 
-    Digest digestB;
-    if (_ph_image_digest(imB,sigma,gamma,digestB,N) < 0)
-        goto cleanup;
+		Digest digestB;
+		if (_ph_image_digest(imB, sigma, gamma, digestB, N) < 0)
+			goto cleanup;
 
-    if (ph_crosscorr(digestA,digestB,pcc,threshold) < 0)
-        goto cleanup;
+		double pcc2;
+		if (ph_crosscorr(digestA, digestB, pcc2, threshold) < 0)
+			goto cleanup;
+
+		if (pcc2  > pcc)
+			pcc = pcc2;
+
+	cleanup:
+		free(digestA.coeffs);
+		free(digestB.coeffs);
+
+		if (!allowSimpleRotation)
+			break;
+		else
+			imA.rotate(90, 0, 0);
+	}
 
     if  (pcc  > threshold)
         result = 1;
 
-cleanup:
-
-    free(digestA.coeffs);
-    free(digestB.coeffs);
     return result;
 }
 
-int ph_compare_images(const char *file1, const char *file2,double &pcc, double sigma, double gamma, int N,double threshold){
+int ph_compare_images(const char *file1, const char *file2, double &pcc, bool allowSimpleRotation,
+	double sigma, double gamma, int N, double threshold){
 
     CImg<uint8_t> *imA = new CImg<uint8_t>(file1);
     CImg<uint8_t> *imB = new CImg<uint8_t>(file2);
 
-    int res = _ph_compare_images(*imA,*imB,pcc,sigma,gamma,N,threshold);
+	int res = _ph_compare_images(*imA, *imB, pcc, allowSimpleRotation, sigma, gamma, N, threshold);
 
     delete imA;
     delete imB;
@@ -514,7 +529,7 @@ int ph_bmb_imagehash(const char *file, uint8_t method, BinHash **ret_hash)
     return 0;
 }
 
-int ph_dct_imagehash(const char* file,ulong64 &hash){
+int ph_dct_imagehash(const char* file, ulong64 &hash, float rotationAngle){
 
     if (!file){
         return -1;
@@ -522,6 +537,8 @@ int ph_dct_imagehash(const char* file,ulong64 &hash){
     CImg<uint8_t> src;
     try {
         src.load(file);
+		if (rotationAngle > 0)
+			src.rotate(rotationAngle);
     } catch (CImgIOException ex){
         return -1;
     }

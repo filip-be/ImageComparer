@@ -27,6 +27,15 @@
     <ClCompile Include="phcomplex.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pHashWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mvptree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mman.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dirent.h">
@@ -60,6 +69,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="zlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pHashWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mvptree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

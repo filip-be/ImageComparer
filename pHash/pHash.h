@@ -25,6 +25,9 @@
 #ifndef _PHASH_H
 #define _PHASH_H
 
+#ifdef _WIN32
+#include <afx.h>
+#endif
 
 #ifndef _WIN32
 #include <pHash-config.h>
@@ -272,25 +275,29 @@ __declspec(dllexport) int ph_image_digest(const char *file, double sigma, double
  *  /param imA - CImg object of first image 
  *  /param imB - CImg object of second image
  *  /param pcc   - (out) double value for peak of cross correlation
+ *  /param allowSimpleRotation - allow simple rotation of image (0, 90, 180, 270 degrees)
  *  /param sigma - double value for the deviation of gaussian filter
  *  /param gamma - double value for gamma correction of images
  *  /param N     - int number for the number of angles of radon projections
  *  /param theshold - double value for the threshold
  *  /return int 0 (false) for different images, 1 (true) for same image, less than 0 for error
  */
-__declspec(dllexport) int _ph_compare_images(const CImg<uint8_t> &imA, const CImg<uint8_t> &imB, double &pcc, double sigma = 3.5, double gamma = 1.0, int N = 180, double threshold = 0.90);
+__declspec(dllexport) int _ph_compare_images(CImg<uint8_t> &imA, CImg<uint8_t> &imB, double &pcc, bool allowSimpleRotation = false,
+	double sigma = 3.5, double gamma = 1.0, int N = 180, double threshold = 0.90);
 
 /*! /brief compare 2 images
  *  Compare 2 images given the file names
  *  /param file1 - char string of first image file
  *  /param file2 - char string of second image file
  *  /param pcc   - (out) double value for peak of cross correlation
+ *  /param allowSimpleRotation - allow simple rotation of image (0, 90, 180, 270 degrees)
  *  /param sigma - double value for deviation of gaussian filter
  *  /param gamma - double value for gamma correction of images
  *  /param N     - int number for number of angles
  *  /return int 0 (false) for different image, 1 (true) for same images, less than 0 for error
  */
-__declspec(dllexport) int ph_compare_images(const char *file1, const char *file2, double &pcc, double sigma = 3.5, double gamma = 1.0, int N = 180, double threshold = 0.90);
+__declspec(dllexport) int ph_compare_images(const char *file1, const char *file2, double &pcc, bool allowSimpleRotation=false,
+	double sigma = 3.5, double gamma = 1.0, int N = 180, double threshold = 0.90);
 
 /*! /brief return dct matrix, C
  *  Return DCT matrix of sqare size, N
@@ -330,7 +337,7 @@ double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int
  *   /return int value - less than 0 for error
  */
 #ifdef HAVE_IMAGE_HASH
-__declspec(dllexport) int ph_hamming_distance(const ulong64 hash1, const ulong64 hash2);
+__declspec(dllexport) int ph_hamming_distance(const ulong64 hash1, const ulong64 hash2, float rotationAngle = 0);
 
 /** /brief create a list of datapoint's directly from a directory of image files
  *  /param dirname - path and name of directory containg all image file names

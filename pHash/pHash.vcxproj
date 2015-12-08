@@ -21,11 +21,13 @@
     <PlatformToolset>v120_xp</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v120_xp</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -96,14 +98,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dirent.c" />
+    <ClCompile Include="mman.cpp" />
+    <ClCompile Include="mvptree.cpp" />
     <ClCompile Include="pHash.cpp" />
+    <ClCompile Include="pHashWrapper.cpp" />
     <ClCompile Include="phcomplex.c" />
     <ClCompile Include="ph_fft.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dirent.h" />
     <ClInclude Include="jpeglib.h" />
+    <ClInclude Include="mman.h" />
+    <ClInclude Include="mvptree.h" />
     <ClInclude Include="pHash.h" />
+    <ClInclude Include="pHashWrapper.h" />
     <ClInclude Include="ph_fft.h" />
     <ClInclude Include="png.h" />
     <ClInclude Include="tiff.h" />
