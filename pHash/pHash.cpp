@@ -530,29 +530,34 @@ int ph_bmb_imagehash(const char *file, uint8_t method, BinHash **ret_hash)
 }
 
 int ph_dct_imagehash(const char* file, ulong64 &hash, float rotationAngle){
+	if (!file){
+		return -1;
+	}
+	CImg<uint8_t> src;
+	try {
+		src.load(file);
+		_ph_dct_imagehash(&src, hash, rotationAngle);
+	}
+	catch (CImgIOException ex){
+		return -1;
+	}
+}
 
-    if (!file){
-        return -1;
-    }
-    CImg<uint8_t> src;
-    try {
-        src.load(file);
-		if (rotationAngle > 0)
-			src.rotate(rotationAngle);
-    } catch (CImgIOException ex){
-        return -1;
-    }
+int _ph_dct_imagehash(CImg<uint8_t> *src, ulong64 &hash, float rotationAngle){
+	if (rotationAngle > 0)
+		src->rotate(rotationAngle);
+    
     CImg<float> meanfilter(7,7,1,1,1);
     CImg<float> img;
-    if (src.spectrum() == 3){
-        img = src.RGBtoYCbCr().channel(0).get_convolve(meanfilter);
-    } else if (src.spectrum() == 4){
+    if (src->spectrum() == 3){
+        img = src->RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+    } else if (src->spectrum() == 4){
         int width = img.width();
         int height = img.height();
         int depth = img.depth();
-        img = src.crop(0,0,0,0,width-1,height-1,depth-1,2).RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+        img = src->crop(0,0,0,0,width-1,height-1,depth-1,2).RGBtoYCbCr().channel(0).get_convolve(meanfilter);
     } else {
-        img = src.channel(0).get_convolve(meanfilter);
+        img = src->channel(0).get_convolve(meanfilter);
     }
 
     img.resize(32,32);
@@ -1162,7 +1167,6 @@ int ph_bitcount8(uint8_t val){
     }
     return num;
 }
-
 
 
 double ph_hammingdistance2(uint8_t *hashA, int lenA, uint8_t *hashB, int lenB){

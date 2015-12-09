@@ -307,11 +307,19 @@ __declspec(dllexport) int ph_compare_images(const char *file1, const char *file2
 static CImg<float>* ph_dct_matrix(const int N);
 
 /*! /brief compute dct robust image hash
+*  /param file string variable for name of file
+*  /param hash of type ulong64 (must be 64-bit variable)
+*  /return int value - -1 for failure, 1 for success
+*/
+__declspec(dllexport) int _ph_dct_imagehash(CImg<uint8_t> *src, ulong64 &hash, float rotationAngle = 0);
+
+
+/*! /brief compute dct robust image hash
  *  /param file string variable for name of file
  *  /param hash of type ulong64 (must be 64-bit variable)
  *  /return int value - -1 for failure, 1 for success
  */
-__declspec(dllexport) int ph_dct_imagehash(const char* file, ulong64 &hash);
+__declspec(dllexport) int ph_dct_imagehash(const char* file, ulong64 &hash, float rotationAngle=0);
 
 int ph_bmb_imagehash(const char *file, uint8_t method, BinHash **ret_hash);
 #endif
@@ -337,7 +345,7 @@ double ph_dct_videohash_dist(ulong64 *hashA, int N1, ulong64 *hashB, int N2, int
  *   /return int value - less than 0 for error
  */
 #ifdef HAVE_IMAGE_HASH
-__declspec(dllexport) int ph_hamming_distance(const ulong64 hash1, const ulong64 hash2, float rotationAngle = 0);
+__declspec(dllexport) int ph_hamming_distance(const ulong64 hash1, const ulong64 hash2);
 
 /** /brief create a list of datapoint's directly from a directory of image files
  *  /param dirname - path and name of directory containg all image file names

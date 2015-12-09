@@ -1,5 +1,142 @@
 #include "pHashWrapper.h"
 #include <Shlwapi.h>
+#include <boost/crc.hpp>  // for boost::crc_32_type
+
+bool CImageFile::ImageCanBeRotated = false;
+
+CImageFile::CImageFile()
+	: fName(""),
+	fCRC(0),
+	iWidth(0),
+	iHeight(0)
+{
+	fSize.QuadPart = 0;
+	fDate.dwHighDateTime = 0;
+	fDate.dwLowDateTime = 0;
+}
+
+CImageFile::CImageFile(CStringW file) : CImageFile()
+{
+	Initialize(file);
+}
+
+bool CImageFile::Initialize(CStringW file)
+{
+	bool res = true;
+	// File name
+	fName = file;
+	HANDLE hFile = CreateFileW(fName,
+		GENERIC_READ,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL);
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		// Read file size
+		BOOL res = GetFileSizeEx(hFile, &fSize);
+
+		// Read file time
+		res = GetFileTime(hFile, NULL, NULL, &fDate);
+
+		// Read CRC
+		char *buffer = new char[_MAX_BUFFER];
+		LARGE_INTEGER readBytes = fSize;
+		boost::crc_32_type  result;
+		DWORD read;
+		do{
+			if (readBytes.QuadPart > _MAX_BUFFER)
+			{
+				if (!ReadFile(hFile, buffer, _MAX_BUFFER, &read, NULL))
+				{
+					res = false;
+					break;
+				}
+				else
+				{
+					result.process_bytes(buffer, _MAX_BUFFER);
+					readBytes.QuadPart -= _MAX_BUFFER;
+				}
+			}
+			else{
+				if (!ReadFile(hFile, buffer, (DWORD)readBytes.QuadPart, &read, NULL))
+				{
+					res = false;
+					break;
+				}
+				else
+				{
+					result.process_bytes(buffer, (size_t)readBytes.QuadPart);
+					readBytes.QuadPart = 0;
+				}
+			}
+		} while (readBytes.QuadPart > 0);
+
+		fCRC = result.checksum();
+		CloseHandle(hFile);
+		delete[]buffer;
+
+		char *ansiname;
+		if (GetShortPathNameANSI(file.GetBuffer(), ansiname))
+		{
+			try
+			{
+				CImg<uint8_t> *src = new CImg<uint8_t>(ansiname);
+				if (src)
+				{
+					iWidth = src->width();
+					iHeight = src->height();
+
+					if (_ph_dct_imagehash(src, iHash[0]) < 0)
+						res = false;
+					else if (ImageCanBeRotated)
+					{
+						if (_ph_dct_imagehash(src, iHash[1], 90) < 0)
+							res = false;
+						if (_ph_dct_imagehash(src, iHash[2], 180) < 0)
+							res = false;
+						if (_ph_dct_imagehash(src, iHash[3], 270) < 0)
+							res = false;
+					}
+				}
+				else
+					res = false;
+			}
+			catch (...)
+			{
+				res = false;
+			}
+			delete[] ansiname;
+
+		}
+		else
+			res = false;
+		
+	}
+	else
+		res = false;
+
+	return res;
+}
+
+bool GetShortPathNameANSI(wchar_t *unicodestr, char *ansistr)
+{
+	int lenW = ::SysStringLen(unicodestr);
+	int lenA = ::WideCharToMultiByte(CP_ACP, 0, unicodestr, lenW, 0, 0, NULL, NULL);
+	if (lenA > 0)
+	{
+		ansistr = new char[lenA + 1]; // allocate a final null terminator as well
+		::WideCharToMultiByte(CP_ACP, 0, unicodestr, lenW, ansistr, lenA, NULL, NULL);
+		ansistr[lenA] = 0; // Set the null terminator yourself
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
 
 /// <summary>Pobranie pe³nej œcie¿ki katalogu</summary>
 /// <param name="_dirPath">katalog</param>
@@ -101,7 +238,6 @@ CStringW GetDirectory(CStringW _dirPath, CStringW *_bMask, bool IsInputDirectory
 /// <param name="strDir"> przeszukiwany katalog</param>
 /// <param name="strMask"> maska przeszukiwania</param>
 /// <param name="strDirIn"> przedrostek nazw katalogów, który jest pomijany podczas zapisu do mapy</param>
-/// <param name="_DirMap"> opcjonalny wskaŸnik na mapê struktur w której zapisywane s¹ daty katalogów</param>
 /// <param name="strExt"> opcjonalna lista rozszerzeñ, które maj¹ byæ sprawdzane</param>
 void SearchFiles(FileVector &_fv, CStringW strDir, const CStringW &strMask,
 	const CStringW &strDirIn, const CStringW &strExt/* = ""*/)
@@ -149,13 +285,13 @@ void SearchFiles(FileVector &_fv, CStringW strDir, const CStringW &strMask,
 }
 
 /// <summary>Przeniesienie pliku</summary>
-bool FileMove(CString strSrc, CString strDst)
+bool FileMove(CStringW strSrc, CStringW strDst)
 {
 	TRY
 	{
-		CString pom;
-		CString strNewName = strDst.Right(strDst.GetLength() - 7);
-		CString strDirectory = strDst.Left(6);
+		CStringW pom;
+		CStringW strNewName = strDst.Right(strDst.GetLength() - 7);
+		CStringW strDirectory = strDst.Left(6);
 		// Utworzenie wszystkich podkatalogow
 		pom.Empty();
 		for (int i = 0; i<strNewName.GetLength(); i++)
@@ -165,7 +301,7 @@ bool FileMove(CString strSrc, CString strDst)
 			else
 			{
 				strDirectory = strDirectory + "\\" + pom;
-				if (::CreateDirectory(strDirectory, NULL) == FALSE)
+				if (::CreateDirectoryW(strDirectory, NULL) == FALSE)
 				{
 					if (::GetLastError() != ERROR_ALREADY_EXISTS)
 						return false;
@@ -173,9 +309,10 @@ bool FileMove(CString strSrc, CString strDst)
 				pom.Empty();
 			}
 		}
-		CFile::Rename(strSrc, strDst);
+		return MoveFileW(strSrc, strDst) != 0;
+		//CFile::Rename(strSrc, strDst);
 	}
-		CATCH(CFileException, e)
+	CATCH(CFileException, e)
 	{
 		return false;
 	}
@@ -189,7 +326,26 @@ bool FileMove(CString strSrc, CString strDst)
 }
 
 /// <summary>Analiza katalogu</summary>
-bool AnalyzeDirectory(CStringW strDir, MVPTree *mTree)
+bool AnalyzeDirectory(CStringW strDir, CStringW strMask, const CStringW &strExt,
+	std::list<CImageFile> &imageList, ProgressUpdateCallback ProgressUpdate)
 {
-	return false;
+	// Gathering files
+	strDir = GetDirectory(strDir, &strMask, false);
+
+	FileVector m_fv;
+	SearchFiles(m_fv, strDir, strMask, strDir, strExt);
+	__int64 counter = 0;
+	__int64 count = m_fv.size();
+	while (!m_fv.empty())
+	{
+		ProgressUpdate(counter, count);
+		
+		imageList.push_back(CImageFile(m_fv.back()));
+		m_fv.pop_back();
+
+		counter++;
+	}
+
+
+	return true;
 }

@@ -3,7 +3,32 @@
 #define _PHASH_WRAPPER_H
 
 #include "pHash.h"
-#include "mvptree.h"
+//#include "mvptree.h"
+
+#define _MAX_BUFFER 20000000
+
+__declspec(dllexport) class CImageFile
+{
+public:
+	CStringW			fName;
+	LARGE_INTEGER		fSize;
+	unsigned long int	fCRC;
+	FILETIME			fDate;
+	int iWidth;
+	int iHeight;
+	ulong64 iHash[4];
+
+	static bool ImageCanBeRotated;
+
+	CImageFile();
+	CImageFile(CStringW file);
+	bool Initialize(CStringW file);
+};
+
+__declspec(dllexport) bool GetShortPathNameANSI(wchar_t *unicodestr, char *ansistr);
+
+typedef void(*ProgressUpdateCallback)(const __int64&, const __int64&);
+
 
 __declspec(dllexport) typedef	vector< CStringW >FileVector;
 
@@ -18,7 +43,6 @@ __declspec(dllexport) CStringW GetDirectory(CStringW _dirPath, CStringW *_bMask,
 /// <param name="strDir"> przeszukiwany katalog</param>
 /// <param name="strMask"> maska przeszukiwania</param>
 /// <param name="strDirIn"> przedrostek nazw katalogów, który jest pomijany podczas zapisu do mapy</param>
-/// <param name="_DirMap"> opcjonalny wskaŸnik na mapê struktur w której zapisywane s¹ daty katalogów</param>
 /// <param name="strExt"> opcjonalna lista rozszerzeñ, które maj¹ byæ sprawdzane</param>
 __declspec(dllexport) void SearchFiles(FileVector &_fv, CStringW strDir, const CStringW &strMask,
 	const CStringW &strDirIn, const CStringW &strExt = "");
@@ -27,6 +51,7 @@ __declspec(dllexport) void SearchFiles(FileVector &_fv, CStringW strDir, const C
 __declspec(dllexport) bool FileMove(CStringW strSrc, CStringW strDst);
 
 /// <summary>Analiza katalogu</summary>
-__declspec(dllexport) bool AnalyzeDirectory(CStringW strDir, MVPTree *mTree);
+__declspec(dllexport) bool AnalyzeDirectory(CStringW strDir, CStringW strMask, const CStringW &strExt,
+	std::list<CImageFile> &imageList, ProgressUpdateCallback ProgressUpdate);
 
 #endif
