@@ -3,6 +3,8 @@
 #define _PHASH_WRAPPER_H
 
 #include "pHash.h"
+#include <vector>
+#include <list>
 //#include "mvptree.h"
 
 #define _MAX_BUFFER 20000000
@@ -25,7 +27,7 @@ public:
 	bool Initialize(CStringW file);
 };
 
-__declspec(dllexport) bool GetShortPathNameANSI(wchar_t *unicodestr, char *ansistr);
+__declspec(dllexport) bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr);
 
 typedef void(*ProgressUpdateCallback)(const __int64&, const __int64&);
 
@@ -36,7 +38,7 @@ __declspec(dllexport) typedef	vector< CStringW >FileVector;
 /// <param name="_dirPath">katalog</param>
 /// <param name="_bMask">maska katalogu</param>
 /// <param name="IsInputDirectory">blokowanie nazw katalogów wejœciowych</param>
-__declspec(dllexport) CStringW GetDirectory(CStringW _dirPath, CStringW *_bMask, bool IsInputDirectory);
+__declspec(dllexport) CStringW GetDirectory(CStringW _dirPath, bool IsInputDirectory);
 
 /// <summary>Rekurencyjne wyszukanie plikow</summary>
 /// <param name="_fv"> wektor, do którego zapisywane s¹ œcie¿ki znalezionych plików</param>

@@ -77,8 +77,8 @@ bool CImageFile::Initialize(CStringW file)
 		CloseHandle(hFile);
 		delete[]buffer;
 
-		char *ansiname;
-		if (GetShortPathNameANSI(file.GetBuffer(), ansiname))
+		char *ansiname = NULL;
+		if (GetShortPathNameANSI(file.GetBuffer(), file.GetLength(), &ansiname))
 		{
 			try
 			{
@@ -120,15 +120,16 @@ bool CImageFile::Initialize(CStringW file)
 	return res;
 }
 
-bool GetShortPathNameANSI(wchar_t *unicodestr, char *ansistr)
+bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr)
 {
-	int lenW = ::SysStringLen(unicodestr);
+	if(lenW == 0)
+		lenW = ::SysStringLen(unicodestr);
 	int lenA = ::WideCharToMultiByte(CP_ACP, 0, unicodestr, lenW, 0, 0, NULL, NULL);
 	if (lenA > 0)
 	{
-		ansistr = new char[lenA + 1]; // allocate a final null terminator as well
-		::WideCharToMultiByte(CP_ACP, 0, unicodestr, lenW, ansistr, lenA, NULL, NULL);
-		ansistr[lenA] = 0; // Set the null terminator yourself
+		*ansistr = new char[lenA + 1]; // allocate a final null terminator as well
+		::WideCharToMultiByte(CP_ACP, 0, unicodestr, lenW, *ansistr, lenA, NULL, NULL);
+		(*ansistr)[lenA] = 0; // Set the null terminator yourself
 	}
 	else
 	{
@@ -142,7 +143,7 @@ bool GetShortPathNameANSI(wchar_t *unicodestr, char *ansistr)
 /// <param name="_dirPath">katalog</param>
 /// <param name="_bMask">maska katalogu</param>
 /// <param name="IsInputDirectory">blokowanie nazw katalogów wejœciowych</param>
-CStringW GetDirectory(CStringW _dirPath, CStringW *_bMask, bool IsInputDirectory)
+CStringW GetDirectory(CStringW _dirPath, bool IsInputDirectory)
 {
 	wchar_t path[_MAX_PATH];
 	wchar_t drive[_MAX_DRIVE];
@@ -174,10 +175,14 @@ CStringW GetDirectory(CStringW _dirPath, CStringW *_bMask, bool IsInputDirectory
 	strDir = drive;
 	if (strDir.IsEmpty())
 	{
-		::GetCurrentDirectoryW(_MAX_PATH, path);
-		strDir = path;
-		if (strDir[strDir.GetLength() - 1] != '\\')
-			strDir += _T("\\");
+		if (memcmp(dir, L"\\\\?\\", 8) != 0)
+		{
+			::GetCurrentDirectoryW(_MAX_PATH, path);
+			strDir = path;
+			if (strDir[strDir.GetLength() - 1] != '\\')
+				strDir += _T("\\");
+		}
+		
 		strDir += dir;
 	}
 	else
@@ -211,24 +216,22 @@ CStringW GetDirectory(CStringW _dirPath, CStringW *_bMask, bool IsInputDirectory
 		(strLastToken.CompareNoCase(L"BAD_95") == 0)))
 	{
 		wprintf(L"Not allowed directory name !!!\n\n");
-		system("PAUSE");
+		//system("PAUSE");
 		return "";
 	}
 	_wsplitpath_s(strDir, drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
 
-	strDir = _T("\\\\?\\");
+	if (memcmp(dir, L"\\\\?\\", 8) != 0)
+		strDir = _T("\\\\?\\");
+	else
+		strDir = "";
+
 	strDir += drive;
 	strDir += dir;
 	strDir += fname;
 	strDir += ext;
 	if (strDir[strDir.GetLength() - 1] != '\\')
 		strDir += _T("\\");
-
-	if (!bMask)
-		strMask = _T("*.*");
-
-	if (_bMask != NULL)
-		*_bMask = strMask;
 
 	return strDir;
 }
@@ -330,7 +333,7 @@ bool AnalyzeDirectory(CStringW strDir, CStringW strMask, const CStringW &strExt,
 	std::list<CImageFile> &imageList, ProgressUpdateCallback ProgressUpdate)
 {
 	// Gathering files
-	strDir = GetDirectory(strDir, &strMask, false);
+	strDir = GetDirectory(strDir, false);
 
 	FileVector m_fv;
 	SearchFiles(m_fv, strDir, strMask, strDir, strExt);
