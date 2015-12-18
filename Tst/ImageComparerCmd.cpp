@@ -88,7 +88,7 @@ void ProgressAnalyzeUpdate(const __int64&counter, const __int64&count)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	printf("ImageComparer v.1.00 by HDLab 2015 (Unicode & Long Path supported)\n\n");
+	printf("ImageComparer v.1.01 by HDLab 2015 (Unicode & Long Path supported)\n\n");
 
 	// Sprawdzenie parametrow
 	if (argc<2)

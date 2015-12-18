@@ -39,7 +39,7 @@ bool CImageFile::Initialize(CStringW file)
 
 		// Read file time
 		res = GetFileTime(hFile, NULL, NULL, &fDate);
-
+		/*
 		// Read CRC
 		char *buffer = new char[_MAX_BUFFER];
 		LARGE_INTEGER readBytes = fSize;
@@ -76,6 +76,8 @@ bool CImageFile::Initialize(CStringW file)
 		fCRC = result.checksum();
 		CloseHandle(hFile);
 		delete[]buffer;
+		*/
+		CloseHandle(hFile);
 
 		char *ansiname = NULL;
 		if (GetShortPathNameANSI(file.GetBuffer(), file.GetLength(), &ansiname))

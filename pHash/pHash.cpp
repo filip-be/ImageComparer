@@ -550,14 +550,29 @@ int _ph_dct_imagehash(CImg<uint8_t> *src, ulong64 &hash, float rotationAngle){
     CImg<float> meanfilter(7,7,1,1,1);
     CImg<float> img;
     if (src->spectrum() == 3){
-        img = src->RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+		///////////////////////
+		///// UWAGA! ZMIANA DZIA£ANIA ALGORYTMU!!!
+		/// ORG:
+		//img = src->RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+		///////////////////////
+		img = src->channel(0);
     } else if (src->spectrum() == 4){
         int width = img.width();
         int height = img.height();
         int depth = img.depth();
-        img = src->crop(0,0,0,0,width-1,height-1,depth-1,2).RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+		///////////////////////
+		///// UWAGA! ZMIANA DZIA£ANIA ALGORYTMU!!!
+		/// ORG:
+		//img = src->crop(0,0,0,0,width-1,height-1,depth-1,2).RGBtoYCbCr().channel(0).get_convolve(meanfilter);
+		///////////////////////
+		img = src->crop(0, 0, 0, 0, width - 1, height - 1, depth - 1, 2).channel(0);
     } else {
-        img = src->channel(0).get_convolve(meanfilter);
+		///////////////////////
+		///// UWAGA! ZMIANA DZIA£ANIA ALGORYTMU!!!
+		/// ORG:
+		//img = src->channel(0).get_convolve(meanfilter);
+		///////////////////////
+		img = src->channel(0);
     }
 
     img.resize(32,32);
