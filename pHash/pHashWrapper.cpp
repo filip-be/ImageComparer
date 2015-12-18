@@ -99,6 +99,7 @@ bool CImageFile::Initialize(CStringW file)
 						if (_ph_dct_imagehash(src, iHash[3], 270) < 0)
 							res = false;
 					}
+					delete src;
 				}
 				else
 					res = false;
@@ -120,23 +121,51 @@ bool CImageFile::Initialize(CStringW file)
 	return res;
 }
 
-bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr)
+bool CImageFile::IsSimiliar(const CImageFile &obj, const double &eQuality)
 {
-	if(lenW == 0)
-		lenW = ::SysStringLen(unicodestr);
-	int lenA = ::WideCharToMultiByte(CP_ACP, 0, unicodestr, lenW, 0, 0, NULL, NULL);
-	if (lenA > 0)
+	if (ph_hamming_distance(this->iHash[0], obj.iHash[0]) <= eQuality)
+		return true;
+	else if (ImageCanBeRotated)
 	{
-		*ansistr = new char[lenA + 1]; // allocate a final null terminator as well
-		::WideCharToMultiByte(CP_ACP, 0, unicodestr, lenW, *ansistr, lenA, NULL, NULL);
-		(*ansistr)[lenA] = 0; // Set the null terminator yourself
-	}
-	else
-	{
-		return false;
+		if (ph_hamming_distance(this->iHash[1], obj.iHash[1]) <= eQuality)
+			return true;
+		else if(ph_hamming_distance(this->iHash[2], obj.iHash[2]) <= eQuality)
+			return true;
+		else if (ph_hamming_distance(this->iHash[3], obj.iHash[3]) <= eQuality)
+			return true;
 	}
 
-	return true;
+	return false;
+}
+
+bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr)
+{
+	bool res = true;
+	lenW = GetShortPathNameW(unicodestr, NULL, 0);
+	if (lenW > 0)
+	{
+		//lenW = ::SysStringLen(unicodestr);
+		wchar_t *wName = new wchar_t[lenW + 1];
+		GetShortPathNameW(unicodestr, wName, lenW);
+		wName[lenW] = 0x00;
+
+		int lenA = ::WideCharToMultiByte(CP_ACP, 0, wName, lenW, 0, 0, NULL, NULL);
+		if (lenA > 0)
+		{
+			*ansistr = new char[lenA + 1]; // allocate a final null terminator as well
+			::WideCharToMultiByte(CP_ACP, 0, wName, lenW, *ansistr, lenA, NULL, NULL);
+			(*ansistr)[lenA] = 0; // Set the null terminator yourself
+		}
+		else
+		{
+			res = false;
+		}
+		delete wName;
+	}
+	else
+		res = false;
+
+	return res;
 }
 
 /// <summary>Pobranie pe³nej œcie¿ki katalogu</summary>

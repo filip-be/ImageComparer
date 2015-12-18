@@ -9,7 +9,7 @@
 
 #define _MAX_BUFFER 20000000
 
-__declspec(dllexport) class CImageFile
+class __declspec(dllexport) CImageFile
 {
 public:
 	CStringW			fName;
@@ -25,6 +25,7 @@ public:
 	CImageFile();
 	CImageFile(CStringW file);
 	bool Initialize(CStringW file);
+	bool IsSimiliar(const CImageFile &obj, const double &eQuality);
 };
 
 __declspec(dllexport) bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr);
