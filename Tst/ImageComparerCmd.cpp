@@ -10,7 +10,6 @@ bool batch;
 CString strDir, strDir2, strDirOK, strDirDUP;
 
 typedef std::list<CImageFile> IFList;
-bool CImageFile::ImageCanBeRotated = false;
 
 __int64 cDUP, cERROR;
 
@@ -27,7 +26,23 @@ IFList::iterator findNext(const CImageFile &obj, const double &eQuality, IFList:
 	return end;
 }
 
-void AnalyzeSingleList(IFList &list, const double &eQuality)
+void WriteLogErrorMove(FILE *logFile, CString orgLoc, CString newLoc)
+{
+	if (logFile != NULL)
+	{
+		fwprintf_s(logFile, L"ERROR while moving file: %s -> %s\r\n", orgLoc.GetBuffer(), newLoc.GetBuffer());
+	}
+}
+
+void WriteLogMoved(FILE *logFile, CString fOK, CString fDUP)
+{
+	if (logFile != NULL)
+	{
+		fwprintf_s(logFile, L"OK:  %s\r\nDUP: %s\r\n\r\n", fOK.GetBuffer(), fDUP.GetBuffer());
+	}
+}
+
+void AnalyzeSingleList(IFList &list, const double &eQuality, FILE *logFile)
 {
 	IFList::iterator iFile = list.begin();
 	while (iFile != list.end())
@@ -42,9 +57,15 @@ void AnalyzeSingleList(IFList &list, const double &eQuality)
 				pom = iFile->fName;
 				pom.Replace(strDir, strDirDUP);
 				if (FileMove(iFile->fName, pom))
+				{
 					cDUP++;
+					WriteLogMoved(logFile, pom, iFind->fName);
+				}
 				else
+				{
 					cERROR++;
+					WriteLogErrorMove(logFile, iFile->fName, pom);
+				}
 				iFile = list.erase(iFile);
 			}
 			else
@@ -52,9 +73,15 @@ void AnalyzeSingleList(IFList &list, const double &eQuality)
 				pom = iFind->fName;
 				pom.Replace(strDir, strDirDUP);
 				if (FileMove(iFind->fName, pom))
+				{
 					cDUP++;
+					WriteLogMoved(logFile, pom, iFile->fName);
+				}
 				else
+				{
 					cERROR++;
+					WriteLogErrorMove(logFile, iFind->fName, pom);
+				}
 				list.erase(iFind);
 			}
 		}
@@ -63,6 +90,29 @@ void AnalyzeSingleList(IFList &list, const double &eQuality)
 	}
 }
 
+void AnalizeListWithTemplate(IFList &lTemplate, IFList &lBad, const double &eQuality, FILE *logFile)
+{
+	for each(CImageFile badFile in lBad)
+	{	// Dla ka¿dego elementu na liœcie BAD wyszukaj podobne obiekty na liœcie OK
+		IFList::iterator iFind = findNext(badFile, eQuality, lTemplate.begin(), lTemplate.end());
+		if (iFind != lTemplate.end())
+		{	// Znaleziono podobny plik
+			CString pom = badFile.fName;
+			pom.Replace(strDir2, strDirDUP);
+			// Przenieœ plik
+			if (FileMove(badFile.fName, pom))
+			{
+				cDUP++;
+				WriteLogMoved(logFile, pom, iFind->fName);
+			}
+			else
+			{
+				cERROR++;
+				WriteLogErrorMove(logFile, badFile.fName, pom);
+			}
+		}
+	}
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // U¿ycie programu
@@ -88,7 +138,7 @@ void ProgressAnalyzeUpdate(const __int64&counter, const __int64&count)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	printf("ImageComparer v.1.01 by HDLab 2015 (Unicode & Long Path supported)\n\n");
+	printf("ImageComparer v.1.05 by Cindalnet 2015-2016 (Unicode & Long Path supported)\n\n");
 
 	// Sprawdzenie parametrow
 	if (argc<2)
@@ -99,6 +149,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	batch = false;
 	cDUP = 0;
 	cERROR = 0;
+
+	bool ImageCanBeRotated = false;
 	double eQuality = 5;
 	CString strMaskExt = L".jpg;.jpeg;.png;.crw;.cr2;.raf;.mrw;.raw;.nef;.orf;.pef;.x3f;.arw;.sr2;.srf;.rw2;";
 
@@ -136,7 +188,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			printf("Batch mode activated...\n");
 			break;
 		case 'r':
-			CImageFile::ImageCanBeRotated = true;
+			ImageCanBeRotated = true;
 			printf("Image can be rotated (90, 180, 270 degrees)...\n");
 			break;
 		case 'q':
@@ -189,9 +241,26 @@ int _tmain(int argc, _TCHAR* argv[])
 		return -1;
 	}
 
+	FILE *logFile = NULL;
+	int logNum = 0;
+	CString pom = "ImageComparerCmdLog.txt";
+	
+	while (!_wfopen_s(&logFile, pom.GetBuffer(), L"rb"))
+	{	// Ustalenie nowej nazwy pliku logu
+		fclose(logFile);
+		pom.Format(L"ImageComparerCmdLog_%3d.txt", ++logNum);
+
+	};
+
+	if (_wfopen_s(&logFile, pom.GetBuffer(), L"wb"))
+	{	// Nie uda³o siê otworzyæ pliku
+		logFile = NULL;
+		std::printf("ERROR WHILE OPENING LOG FILE %S!!!\n\n", pom.GetBuffer());
+	}
+
 	std::printf("Analyzing %S...\n", strDir.GetBuffer());
 	IFList lFiles;
-	if (AnalyzeDirectory(strDir, "*.*", strMaskExt, lFiles, *ProgressAnalyzeUpdate))
+	if (AnalyzeDirectory(strDir, "*.*", strMaskExt, lFiles, ImageCanBeRotated, *ProgressAnalyzeUpdate, logFile))
 	{
 		std::printf("\nDone!\n\n");
 	}
@@ -200,19 +269,19 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		std::printf("Analyzing %S...\n", strDir2.GetBuffer());
 		IFList lFiles2;
-		if (AnalyzeDirectory(strDir2, "*.*", strMaskExt, lFiles2, *ProgressAnalyzeUpdate))
+		if (AnalyzeDirectory(strDir2, "*.*", strMaskExt, lFiles2, ImageCanBeRotated, *ProgressAnalyzeUpdate, logFile))
 		{
 			std::printf("\nDone!\n\n");
 		}
 
-
+		AnalizeListWithTemplate(lFiles, lFiles2, eQuality, logFile);
 
 		lFiles.clear();
 		lFiles2.clear();
 	}
 	else
 	{
-		AnalyzeSingleList(lFiles, eQuality);
+		AnalyzeSingleList(lFiles, eQuality, logFile);
 		lFiles.clear();
 	}
 	
@@ -225,6 +294,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	std::printf(" - error files:\t\t\t%10I64d\t\t%6.2f %%\n", cERROR, lFiles.size()>0 ? double(cERROR) * 100 / double(lFiles.size()) : 0);
 	//printf("Data Recovery Efficiency:%6.2f %%\n\n\n", (cok + cdup)>0 ? double(cok) * 100 / double(cok + cdup) : 0);
 	
+	if (logFile != NULL)
+		fclose(logFile);
 	
 	if (!batch)
 		system("PAUSE");

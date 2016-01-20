@@ -19,12 +19,11 @@ public:
 	int iWidth;
 	int iHeight;
 	ulong64 iHash[4];
-
-	static bool ImageCanBeRotated;
+	bool				ImageCanBeRotated;
 
 	CImageFile();
-	CImageFile(CStringW file);
-	bool Initialize(CStringW file);
+	CImageFile(CStringW file, bool _ImageCanBeRotated);
+	bool Initialize(CStringW file, bool _ImageCanBeRotated);
 	bool IsSimiliar(const CImageFile &obj, const double &eQuality);
 };
 
@@ -55,6 +54,7 @@ __declspec(dllexport) bool FileMove(CStringW strSrc, CStringW strDst);
 
 /// <summary>Analiza katalogu</summary>
 __declspec(dllexport) bool AnalyzeDirectory(CStringW strDir, CStringW strMask, const CStringW &strExt,
-	std::list<CImageFile> &imageList, ProgressUpdateCallback ProgressUpdate);
+	std::list<CImageFile> &imageList, bool _ImageCanBeRotated,
+	ProgressUpdateCallback ProgressUpdate, FILE *logFile);
 
 #endif

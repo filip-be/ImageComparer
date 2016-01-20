@@ -2,26 +2,26 @@
 #include <Shlwapi.h>
 #include <boost/crc.hpp>  // for boost::crc_32_type
 
-bool CImageFile::ImageCanBeRotated = false;
-
 CImageFile::CImageFile()
 	: fName(""),
 	fCRC(0),
 	iWidth(0),
-	iHeight(0)
+	iHeight(0),
+	ImageCanBeRotated(false)
 {
 	fSize.QuadPart = 0;
 	fDate.dwHighDateTime = 0;
 	fDate.dwLowDateTime = 0;
 }
 
-CImageFile::CImageFile(CStringW file) : CImageFile()
+CImageFile::CImageFile(CStringW file, bool _ImageCanBeRotated) : CImageFile()
 {
-	Initialize(file);
+	Initialize(file, _ImageCanBeRotated);
 }
 
-bool CImageFile::Initialize(CStringW file)
+bool CImageFile::Initialize(CStringW file, bool _ImageCanBeRotated)
 {
+	this->ImageCanBeRotated = _ImageCanBeRotated;
 	bool res = true;
 	// File name
 	fName = file;
@@ -125,17 +125,19 @@ bool CImageFile::Initialize(CStringW file)
 
 bool CImageFile::IsSimiliar(const CImageFile &obj, const double &eQuality)
 {
-	if (ph_hamming_distance(this->iHash[0], obj.iHash[0]) <= eQuality)
-		return true;
-	else if (ImageCanBeRotated)
+	if (ImageCanBeRotated)
 	{
-		if (ph_hamming_distance(this->iHash[1], obj.iHash[1]) <= eQuality)
-			return true;
-		else if(ph_hamming_distance(this->iHash[2], obj.iHash[2]) <= eQuality)
-			return true;
-		else if (ph_hamming_distance(this->iHash[3], obj.iHash[3]) <= eQuality)
-			return true;
+		for each(ulong64 thisHash in this->iHash)
+		{
+			for each(ulong64 otherHash in obj.iHash)
+			{
+				if (ph_hamming_distance(thisHash, otherHash) <= eQuality)
+					return true;
+			}
+		}
 	}
+	else if (ph_hamming_distance(this->iHash[0], obj.iHash[0]) <= eQuality)
+		return true;
 
 	return false;
 }
@@ -361,7 +363,8 @@ bool FileMove(CStringW strSrc, CStringW strDst)
 
 /// <summary>Analiza katalogu</summary>
 bool AnalyzeDirectory(CStringW strDir, CStringW strMask, const CStringW &strExt,
-	std::list<CImageFile> &imageList, ProgressUpdateCallback ProgressUpdate)
+	std::list<CImageFile> &imageList, bool _ImageCanBeRotated, 
+	ProgressUpdateCallback ProgressUpdate, FILE *logFile)
 {
 	// Gathering files
 	strDir = GetDirectory(strDir, false);
@@ -374,7 +377,17 @@ bool AnalyzeDirectory(CStringW strDir, CStringW strMask, const CStringW &strExt,
 	{
 		ProgressUpdate(counter, count);
 		
-		imageList.push_back(CImageFile(m_fv.back()));
+		try
+		{
+			imageList.push_back(CImageFile(m_fv.back(), _ImageCanBeRotated));
+		}
+		catch (exception)
+		{
+			if (logFile != NULL)
+			{
+				fwprintf_s(logFile, L"ERROR PARSING FILE: %s\r\n", m_fv.back());
+			}
+		}
 		m_fv.pop_back();
 
 		counter++;
