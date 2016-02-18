@@ -1,13 +1,19 @@
 #include "pHashWrapper.h"
 #include <Shlwapi.h>
 #include <boost/crc.hpp>  // for boost::crc_32_type
+#include <exiv2/exiv2.hpp>
 
 CImageFile::CImageFile()
 	: fName(""),
 	fCRC(0),
 	iWidth(0),
 	iHeight(0),
-	ImageCanBeRotated(false)
+	ImageCanBeRotated(false),
+	hasExif(false),
+	eWidth(-1),
+	eLength(-1),
+	eMakeModel(),
+	eDateTimeOriginal(0)
 {
 	fSize.QuadPart = 0;
 	fDate.dwHighDateTime = 0;
@@ -21,10 +27,10 @@ CImageFile::CImageFile(CStringW file, bool _ImageCanBeRotated) : CImageFile()
 
 bool CImageFile::Initialize(CStringW file, bool _ImageCanBeRotated)
 {
-	this->ImageCanBeRotated = _ImageCanBeRotated;
 	bool res = true;
-	// File name
-	fName = file;
+	this->ImageCanBeRotated = _ImageCanBeRotated;
+	this->fName = file;
+
 	HANDLE hFile = CreateFileW(fName,
 		GENERIC_READ,
 		FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -39,7 +45,181 @@ bool CImageFile::Initialize(CStringW file, bool _ImageCanBeRotated)
 
 		// Read file time
 		res = GetFileTime(hFile, NULL, NULL, &fDate);
-		/*
+		CloseHandle(hFile);
+
+		// Read exif
+		ReadExif();
+
+		// ReadHash
+		CalculateHash();
+	}
+	else
+		res = false;
+
+	return res;
+}
+
+bool CImageFile::ReadExif()
+{
+	bool res = true;
+
+	char *ansiname = NULL;
+	if (GetShortPathNameANSI(fName.GetBuffer(), fName.GetLength(), &ansiname, true))
+	{
+		try
+		{
+			Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(ansiname);
+			if (image.get() != 0)
+			{
+				image->readMetadata();
+				Exiv2::ExifData &exifData = image->exifData();
+				hasExif = !exifData.empty();
+
+				if (hasExif)
+				{
+					if (iWidth == 0)
+						iWidth = image->pixelWidth();
+					if (iHeight == 0)
+						iHeight = image->pixelHeight();
+
+					Exiv2::ExifData::const_iterator end = exifData.end();
+					for (Exiv2::ExifData::const_iterator i = exifData.begin(); i != end; ++i)
+					{
+						CString typeName = i->typeName();
+						CString key = i->key().c_str();
+						
+						if (key.CompareNoCase("Exif.Image.ImageWidth") == 0)
+						{
+							if (typeName.CompareNoCase("Short") == 0)
+								eWidth = i->value().toLong();
+							else
+								eWidth = -1;
+						}
+						else if (key.CompareNoCase("Exif.Image.ImageLength") == 0)
+						{
+							if (typeName.CompareNoCase("Short") == 0)
+								eLength = i->value().toLong();
+							else
+								eLength = -1;
+						}
+						else if (key.CompareNoCase("Exif.Image.Make") == 0)
+						{
+							if (typeName.CompareNoCase("Ascii") == 0)
+							{
+								CString temp = eMakeModel;
+								eMakeModel = i->value().toString().c_str();
+								eMakeModel += temp;
+							}
+						}
+						else if (key.CompareNoCase("Exif.Image.Model") == 0)
+						{
+							if (typeName.CompareNoCase("Ascii") == 0)
+							{
+								eMakeModel += " ";
+								eMakeModel += i->value().toString().c_str();
+							}
+						}
+						else if (key.CompareNoCase("Exif.Photo.DateTimeOriginal") == 0)
+						{
+							if (typeName.CompareNoCase("Ascii") == 0 && i->count() == 20)
+							{
+								struct std::tm tm;
+
+								std::istringstream ss(i->value().toString().c_str());
+								std::string time_formats[] = { "%Y-%m-%d%t%H:%M:%S",
+															  "%Y:%m:%d%t%H:%M:%S" };
+								for each (std::string time_format in time_formats)
+								{
+									ss >> std::get_time(&tm, time_format.c_str());
+									if (!ss.fail())
+									{
+										eDateTimeOriginal = mktime(&tm);
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+				res = false;
+		}
+		catch (Exiv2::Error) {
+			//std::cout << "Caught Exiv2 exception '" << e.what() << "'\n";
+			res = false;;
+		}
+		catch (...)
+		{
+			res = false;
+		}
+	}
+	else
+		res = false;
+	
+	return res;
+}
+
+bool CImageFile::CalculateHash()
+{
+	bool res = true;
+
+	char *ansiname = NULL;
+	if (GetShortPathNameANSI(fName.GetBuffer(), fName.GetLength(), &ansiname, true))
+	{
+		try
+		{
+			CImg<uint8_t> *src = new CImg<uint8_t>(ansiname);
+			
+			if (src)
+			{
+				iWidth = src->width();
+				iHeight = src->height();
+
+				if (_ph_dct_imagehash(src, iHash[0]) < 0)
+					res = false;
+				else if (ImageCanBeRotated)
+				{
+					if (_ph_dct_imagehash(src, iHash[1], 90) < 0)
+						res = false;
+					if (_ph_dct_imagehash(src, iHash[2], 180) < 0)
+						res = false;
+					if (_ph_dct_imagehash(src, iHash[3], 270) < 0)
+						res = false;
+				}
+				delete src;
+			}
+			else
+				res = false;
+		}
+		catch (...)
+		{
+			res = false;
+		}
+		delete[] ansiname;
+
+	}
+	else
+		res = false;
+
+	return res;
+}
+
+bool CImageFile::CalculateCRC()
+{
+	bool res = true;
+	if (fName.IsEmpty())
+		return false;
+
+	HANDLE hFile = CreateFileW(fName,
+		GENERIC_READ,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL);
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
 		// Read CRC
 		char *buffer = new char[_MAX_BUFFER];
 		LARGE_INTEGER readBytes = fSize;
@@ -76,49 +256,9 @@ bool CImageFile::Initialize(CStringW file, bool _ImageCanBeRotated)
 		fCRC = result.checksum();
 		CloseHandle(hFile);
 		delete[]buffer;
-		*/
-		CloseHandle(hFile);
-
-		char *ansiname = NULL;
-		if (GetShortPathNameANSI(file.GetBuffer(), file.GetLength(), &ansiname))
-		{
-			try
-			{
-				CImg<uint8_t> *src = new CImg<uint8_t>(ansiname);
-				if (src)
-				{
-					iWidth = src->width();
-					iHeight = src->height();
-
-					if (_ph_dct_imagehash(src, iHash[0]) < 0)
-						res = false;
-					else if (ImageCanBeRotated)
-					{
-						if (_ph_dct_imagehash(src, iHash[1], 90) < 0)
-							res = false;
-						if (_ph_dct_imagehash(src, iHash[2], 180) < 0)
-							res = false;
-						if (_ph_dct_imagehash(src, iHash[3], 270) < 0)
-							res = false;
-					}
-					delete src;
-				}
-				else
-					res = false;
-			}
-			catch (...)
-			{
-				res = false;
-			}
-			delete[] ansiname;
-
-		}
-		else
-			res = false;
-		
 	}
 	else
-		res = false;
+		return false;
 
 	return res;
 }
@@ -142,15 +282,20 @@ bool CImageFile::IsSimiliar(const CImageFile &obj, const double &eQuality)
 	return false;
 }
 
-bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr)
+bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr, bool removeUnicodeAddon/*=false*/)
 {
 	bool res = true;
-	lenW = GetShortPathNameW(unicodestr, NULL, 0);
+	int stringOffset = 0;
+	if (removeUnicodeAddon && unicodestr[0] == L'\\' && unicodestr[1] == L'\\' && unicodestr[2] == L'?' && unicodestr[0] == L'\\')
+	{
+		stringOffset = 4;
+	}
+	lenW = GetShortPathNameW(unicodestr + stringOffset, NULL, 0);
 	if (lenW > 0)
 	{
 		//lenW = ::SysStringLen(unicodestr);
 		wchar_t *wName = new wchar_t[lenW + 1];
-		GetShortPathNameW(unicodestr, wName, lenW);
+		GetShortPathNameW(unicodestr + stringOffset, wName, lenW);
 		wName[lenW] = 0x00;
 
 		int lenA = ::WideCharToMultiByte(CP_ACP, 0, wName, lenW, 0, 0, NULL, NULL);

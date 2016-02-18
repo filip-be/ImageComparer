@@ -14,20 +14,30 @@ class __declspec(dllexport) CImageFile
 public:
 	CStringW			fName;
 	LARGE_INTEGER		fSize;
-	unsigned long int	fCRC;
+	unsigned int		fCRC;
 	FILETIME			fDate;
-	int iWidth;
-	int iHeight;
-	ulong64 iHash[4];
+	int					iWidth;
+	int					iHeight;
+	ulong64				iHash[4];
+
+	bool				hasExif;
+	long				eWidth;
+	long				eLength;
+	CStringW			eMakeModel;
+	time_t				eDateTimeOriginal;
+
 	bool				ImageCanBeRotated;
 
 	CImageFile();
 	CImageFile(CStringW file, bool _ImageCanBeRotated);
+	bool ReadExif();
+	bool CalculateHash();
+	bool CalculateCRC();
 	bool Initialize(CStringW file, bool _ImageCanBeRotated);
 	bool IsSimiliar(const CImageFile &obj, const double &eQuality);
 };
 
-__declspec(dllexport) bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr);
+__declspec(dllexport) bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr, bool removeUnicodeAddon=false);
 
 typedef void(*ProgressUpdateCallback)(const __int64&, const __int64&);
 

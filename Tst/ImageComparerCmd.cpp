@@ -100,6 +100,7 @@ void AnalizeListWithTemplate(IFList &lTemplate, IFList &lBad, const double &eQua
 			CString pom = badFile.fName;
 			pom.Replace(strDir2, strDirDUP);
 			// Przenieœ plik
+			/*
 			if (FileMove(badFile.fName, pom))
 			{
 				cDUP++;
@@ -110,6 +111,7 @@ void AnalizeListWithTemplate(IFList &lTemplate, IFList &lBad, const double &eQua
 				cERROR++;
 				WriteLogErrorMove(logFile, badFile.fName, pom);
 			}
+			*/
 		}
 	}
 }
@@ -138,7 +140,7 @@ void ProgressAnalyzeUpdate(const __int64&counter, const __int64&count)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	printf("ImageComparer v.1.05 by Cindalnet 2015-2016 (Unicode & Long Path supported)\n\n");
+	printf("ImageComparer v.1.1 by Cindalnet 2015-2016 (Unicode & Long Path (partially?) supported)\n\n");
 
 	// Sprawdzenie parametrow
 	if (argc<2)
@@ -260,6 +262,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	std::printf("Analyzing %S...\n", strDir.GetBuffer());
 	IFList lFiles;
+	time_t lFilesSize = 0;
 	if (AnalyzeDirectory(strDir, "*.*", strMaskExt, lFiles, ImageCanBeRotated, *ProgressAnalyzeUpdate, logFile))
 	{
 		std::printf("\nDone!\n\n");
@@ -273,7 +276,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			std::printf("\nDone!\n\n");
 		}
-
+		lFilesSize = lFiles.size();
 		AnalizeListWithTemplate(lFiles, lFiles2, eQuality, logFile);
 
 		lFiles.clear();
@@ -281,6 +284,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	else
 	{
+		lFilesSize = lFiles.size();
 		AnalyzeSingleList(lFiles, eQuality, logFile);
 		lFiles.clear();
 	}
@@ -289,9 +293,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	std::printf("\n\nFiles validating complete !!!\n\n");
 	
 	std::printf("\nSummary:\n");
-	std::printf(" - all files:\t\t\t%10d\t\t%6.2f %%\n", lFiles.size(), lFiles.size()>0 ? double(lFiles.size()) * 100 / double(lFiles.size()) : 0);
-	std::printf(" - dup files:\t\t\t%10I64d\t\t%6.2f %%\n", cDUP, lFiles.size()>0 ? double(cDUP) * 100 / double(lFiles.size()) : 0);
-	std::printf(" - error files:\t\t\t%10I64d\t\t%6.2f %%\n", cERROR, lFiles.size()>0 ? double(cERROR) * 100 / double(lFiles.size()) : 0);
+	std::printf(" - all files:\t\t\t%10d\t\t%6.2f %%\n", lFilesSize, lFilesSize>0 ? double(lFilesSize) * 100 / double(lFilesSize) : 0);
+	std::printf(" - dup files:\t\t\t%10I64d\t\t%6.2f %%\n", cDUP, lFilesSize>0 ? double(cDUP) * 100 / double(lFilesSize) : 0);
+	std::printf(" - error files:\t\t\t%10I64d\t\t%6.2f %%\n", cERROR, lFilesSize>0 ? double(cERROR) * 100 / double(lFilesSize) : 0);
 	//printf("Data Recovery Efficiency:%6.2f %%\n\n\n", (cok + cdup)>0 ? double(cok) * 100 / double(cok + cdup) : 0);
 	
 	if (logFile != NULL)

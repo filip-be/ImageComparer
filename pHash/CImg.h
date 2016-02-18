@@ -43956,13 +43956,19 @@ namespace cimg_library_suffixed {
       }
 #endif
       do {
-        cimg_snprintf(filename_tmp,filename_tmp._width,"%s%c%s.ppm",
+        cimg_snprintf(filename_tmp,filename_tmp._width,"%s%c%s.jpg",
                       cimg::temporary_path(),cimg_file_separator,cimg::filenamerand());
         if ((file=std::fopen(filename_tmp,"rb"))!=0) cimg::fclose(file);
       } while (file);
-      cimg_snprintf(command,command._width,"%s -w -4 -c \"%s\" > \"%s\"",
+      //////////////////////////////////////////////////////
+	  // ZMIANA - wyodrębnienie miniaturki pliku
+	  //////////////////////////////////////////////////////
+	  //cimg_snprintf(command,command._width,"%s -w -4 -c \"%s\" > \"%s\"",
+	  cimg_snprintf(command, command._width, "%s -e -c \"%s\" > \"%s\"",
                     cimg::dcraw_path(),s_filename.data(),CImg<charT>::string(filename_tmp)._system_strescape().data());
-      cimg::system(command,cimg::dcraw_path());
+      //cimg::system(command,cimg::dcraw_path());
+	  cimg::system(command, "cmd.exe");
+	  //const char *path = cimg::dcraw_path();
       if (!(file = std::fopen(filename_tmp,"rb"))) {
         cimg::fclose(cimg::fopen(filename,"r"));
         throw CImgIOException(_cimg_instance
@@ -43971,7 +43977,8 @@ namespace cimg_library_suffixed {
                               filename);
 
       } else cimg::fclose(file);
-      load_pnm(filename_tmp);
+      //load_pnm(filename_tmp);
+	  load_jpeg(filename_tmp);
       std::remove(filename_tmp);
       return *this;
     }

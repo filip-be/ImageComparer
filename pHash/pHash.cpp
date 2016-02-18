@@ -536,7 +536,7 @@ int ph_dct_imagehash(const char* file, ulong64 &hash, float rotationAngle){
 	CImg<uint8_t> src;
 	try {
 		src.load(file);
-		_ph_dct_imagehash(&src, hash, rotationAngle);
+		return _ph_dct_imagehash(&src, hash, rotationAngle);
 	}
 	catch (CImgIOException ex){
 		return -1;
@@ -556,6 +556,7 @@ int _ph_dct_imagehash(CImg<uint8_t> *src, ulong64 &hash, float rotationAngle){
 		//img = src->RGBtoYCbCr().channel(0).get_convolve(meanfilter);
 		///////////////////////
 		img = src->channel(0);
+		
     } else if (src->spectrum() == 4){
         int width = img.width();
         int height = img.height();
