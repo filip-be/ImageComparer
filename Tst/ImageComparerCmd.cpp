@@ -42,7 +42,7 @@ void WriteLogMoved(FILE *logFile, CString fOK, CString fDUP)
 	}
 }
 
-void AnalyzeSingleList(IFList &list, const double &eQuality, FILE *logFile)
+void AnalyzeSingleList(IFList &list, const double &eQuality, FILE *logFile, bool MoveSmaller)
 {
 	IFList::iterator iFile = list.begin();
 	while (iFile != list.end())
@@ -52,14 +52,18 @@ void AnalyzeSingleList(IFList &list, const double &eQuality, FILE *logFile)
 		if (iFind != list.end())
 		{
 			CString pom;
-			if (iFile->iHeight < iFind->iHeight || iFile->iWidth < iFind->iWidth)
+			if ((iFile->iHeight < iFind->iHeight || iFile->iWidth < iFind->iWidth) // iFile has smaller resolution
+				|| (iFile->iHeight == iFind->iHeight && iFile->iWidth == iFind->iWidth	// files has same width
+					&& iFile->fSize.QuadPart < iFind->fSize.QuadPart					// and iFile is smaller
+					&& MoveSmaller)														// and smaller files will be treated as duplicates
+				)
 			{	// iFile is worse
 				pom = iFile->fName;
 				pom.Replace(strDir, strDirDUP);
 				if (FileMove(iFile->fName, pom))
 				{
 					cDUP++;
-					WriteLogMoved(logFile, pom, iFind->fName);
+					WriteLogMoved(logFile, iFind->fName, pom);
 				}
 				else
 				{
@@ -75,7 +79,7 @@ void AnalyzeSingleList(IFList &list, const double &eQuality, FILE *logFile)
 				if (FileMove(iFind->fName, pom))
 				{
 					cDUP++;
-					WriteLogMoved(logFile, pom, iFile->fName);
+					WriteLogMoved(logFile, iFile->fName, pom);
 				}
 				else
 				{
@@ -100,7 +104,6 @@ void AnalizeListWithTemplate(IFList &lTemplate, IFList &lBad, const double &eQua
 			CString pom = badFile.fName;
 			pom.Replace(strDir2, strDirDUP);
 			// Przenieœ plik
-			/*
 			if (FileMove(badFile.fName, pom))
 			{
 				cDUP++;
@@ -111,7 +114,6 @@ void AnalizeListWithTemplate(IFList &lTemplate, IFList &lBad, const double &eQua
 				cERROR++;
 				WriteLogErrorMove(logFile, badFile.fName, pom);
 			}
-			*/
 		}
 	}
 }
@@ -125,6 +127,7 @@ void usageInfo()
 	std::printf("Arguments:\n");
 	std::printf("-b\t- run in batch mode\n");
 	std::printf("-r\t- allow image rotation\n");
+	std::printf("-s\t- files with smaller size will be treated as duplicates\n");
 	std::printf("-q\t- eQuality parameter. DEFAULT: 5.00\n");
 	std::printf("-e LIST\t- extension (one or more) of files to validate\n");
 	std::printf(" DEFAULT: -e .jpg;.jpeg;.png;.crw;.cr2;.raf;.mrw;.raw;.nef;.orf;.pef;.x3f;.arw;.sr2;.srf;.rw2;\n\n");
@@ -140,7 +143,7 @@ void ProgressAnalyzeUpdate(const __int64&counter, const __int64&count)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	printf("ImageComparer v.1.1 by Cindalnet 2015-2016 (Unicode & Long Path (partially?) supported)\n\n");
+	printf("ImageComparer v.1.11 by HDLAB 2015-2016 (Unicode & Long Path (partially?) supported)\n\n");
 
 	// Sprawdzenie parametrow
 	if (argc<2)
@@ -153,6 +156,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	cERROR = 0;
 
 	bool ImageCanBeRotated = false;
+	bool MoveSmaller = false;
 	double eQuality = 5;
 	CString strMaskExt = L".jpg;.jpeg;.png;.crw;.cr2;.raf;.mrw;.raw;.nef;.orf;.pef;.x3f;.arw;.sr2;.srf;.rw2;";
 
@@ -182,35 +186,39 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	CString tempString = L"";
-	while ((c = getopt(argc, argv, _T("brq:e:"))) != -1)
-		switch (c)
+	while ((c = getopt(argc, argv, _T("sbrq:e:"))) != -1)
+	switch (c)
 	{
+		case 's':
+			MoveSmaller = true;
+			std::printf("Files with smaller size will be treated as dups...\n");
+			break;
 		case 'b':
 			batch = true;
 			printf("Batch mode activated...\n");
 			break;
 		case 'r':
 			ImageCanBeRotated = true;
-			printf("Image can be rotated (90, 180, 270 degrees)...\n");
+			std::printf("Image can be rotated (90, 180, 270 degrees)...\n");
 			break;
 		case 'q':
 			eQuality = _wtof(optarg);
-			printf("Setting eQuality parameter: %lf...\n", eQuality);
+			std::printf("Setting eQuality parameter: %lf...\n", eQuality);
 			break;
 		case 'e':
 			tempString = optarg;
 			strMaskExt = tempString;
 			if (strMaskExt.ReverseFind(';') != (strMaskExt.GetLength() - 1))
 				strMaskExt += ';';
-			printf("Using file mask: %S\n", strMaskExt);
+			std::printf("Using file mask: %S\n", strMaskExt);
 			break;
 		case '?':
 			if (optopt == 'e')
-				fprintf(stderr, "Option -%c requires an argument.\n\n", optopt);
+				std::fprintf(stderr, "Option -%c requires an argument.\n\n", optopt);
 			else if (isprint(optopt))
-				fprintf(stderr, "Unknown option `-%c'.\n\n", optopt);
+				std::fprintf(stderr, "Unknown option `-%c'.\n\n", optopt);
 			else
-				fprintf(stderr,
+				std::fprintf(stderr,
 				"Unknown option character `\\x%x'.\n\n",
 				optopt);
 			usageInfo();
@@ -222,7 +230,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	if (optind<argc)
 	{
 		for (int index = optind; index < argc; index++)
-			printf("Non-option argument %S\n\n", argv[index]);
+			std::printf("Non-option argument %S\n\n", argv[index]);
 		usageInfo();
 		return -1;
 	}
@@ -285,7 +293,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	else
 	{
 		lFilesSize = lFiles.size();
-		AnalyzeSingleList(lFiles, eQuality, logFile);
+		AnalyzeSingleList(lFiles, eQuality, logFile, MoveSmaller);
 		lFiles.clear();
 	}
 	
