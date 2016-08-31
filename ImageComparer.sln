@@ -10,9 +10,87 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImageComparerCmd", "Tst\Tst
 		{1A4E5682-AA5E-41E6-9C0D-CC85D3A3D547} = {1A4E5682-AA5E-41E6-9C0D-CC85D3A3D547}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pHashWrapper", "pHashWrapper\pHashWrapper.vcxproj", "{4FF0A6FD-48B7-4E70-A202-9D0C50265A95}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pHashWrapper.NET", "pHashWrapper\pHashWrapper.vcxproj", "{4FF0A6FD-48B7-4E70-A202-9D0C50265A95}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pliki", "Pliki", "{24FAA31D-1E05-4F52-8C0B-3B7D12C05909}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Debug", "Debug", "{71B68D84-FD4E-4948-8E12-DC05B2B25229}"
+	ProjectSection(SolutionItems) = preProject
+		Pliki\Debug\CORE_RL_bzlib_.dll = Pliki\Debug\CORE_RL_bzlib_.dll
+		Pliki\Debug\CORE_RL_cairo_.dll = Pliki\Debug\CORE_RL_cairo_.dll
+		Pliki\Debug\CORE_RL_exr_.dll = Pliki\Debug\CORE_RL_exr_.dll
+		Pliki\Debug\CORE_RL_glib_.dll = Pliki\Debug\CORE_RL_glib_.dll
+		Pliki\Debug\CORE_RL_jp2_.dll = Pliki\Debug\CORE_RL_jp2_.dll
+		Pliki\Debug\CORE_RL_jpeg_.dll = Pliki\Debug\CORE_RL_jpeg_.dll
+		Pliki\Debug\CORE_RL_lcms_.dll = Pliki\Debug\CORE_RL_lcms_.dll
+		Pliki\Debug\CORE_RL_librsvg_.dll = Pliki\Debug\CORE_RL_librsvg_.dll
+		Pliki\Debug\CORE_RL_libxml_.dll = Pliki\Debug\CORE_RL_libxml_.dll
+		Pliki\Debug\CORE_RL_lqr_.dll = Pliki\Debug\CORE_RL_lqr_.dll
+		Pliki\Debug\CORE_RL_Magick++_.dll = Pliki\Debug\CORE_RL_Magick++_.dll
+		Pliki\Debug\CORE_RL_magick_.dll = Pliki\Debug\CORE_RL_magick_.dll
+		Pliki\Debug\CORE_RL_openjpeg_.dll = Pliki\Debug\CORE_RL_openjpeg_.dll
+		Pliki\Debug\CORE_RL_pango_.dll = Pliki\Debug\CORE_RL_pango_.dll
+		Pliki\Debug\CORE_RL_png_.dll = Pliki\Debug\CORE_RL_png_.dll
+		Pliki\Debug\CORE_RL_tiff_.dll = Pliki\Debug\CORE_RL_tiff_.dll
+		Pliki\Debug\CORE_RL_ttf_.dll = Pliki\Debug\CORE_RL_ttf_.dll
+		Pliki\Debug\CORE_RL_wand_.dll = Pliki\Debug\CORE_RL_wand_.dll
+		Pliki\Debug\CORE_RL_webp_.dll = Pliki\Debug\CORE_RL_webp_.dll
+		Pliki\Debug\CORE_RL_zlib_.dll = Pliki\Debug\CORE_RL_zlib_.dll
+		Pliki\Debug\dcraw.exe = Pliki\Debug\dcraw.exe
+		Pliki\Debug\jpeg62.dll = Pliki\Debug\jpeg62.dll
+		Pliki\Debug\libexiv2d.dll = Pliki\Debug\libexiv2d.dll
+		Pliki\Debug\libexpat.dll = Pliki\Debug\libexpat.dll
+		Pliki\Debug\libpng12.dll = Pliki\Debug\libpng12.dll
+		Pliki\Debug\tiffd.dll = Pliki\Debug\tiffd.dll
+		Pliki\Debug\zlib1.dll = Pliki\Debug\zlib1.dll
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Release", "Release", "{4CEE0B7F-2001-4DF0-8116-F5E0FCC59490}"
+	ProjectSection(SolutionItems) = preProject
+		Pliki\Release\CORE_RL_bzlib_.dll = Pliki\Release\CORE_RL_bzlib_.dll
+		Pliki\Release\CORE_RL_cairo_.dll = Pliki\Release\CORE_RL_cairo_.dll
+		Pliki\Release\CORE_RL_exr_.dll = Pliki\Release\CORE_RL_exr_.dll
+		Pliki\Release\CORE_RL_glib_.dll = Pliki\Release\CORE_RL_glib_.dll
+		Pliki\Release\CORE_RL_jp2_.dll = Pliki\Release\CORE_RL_jp2_.dll
+		Pliki\Release\CORE_RL_jpeg_.dll = Pliki\Release\CORE_RL_jpeg_.dll
+		Pliki\Release\CORE_RL_lcms_.dll = Pliki\Release\CORE_RL_lcms_.dll
+		Pliki\Release\CORE_RL_librsvg_.dll = Pliki\Release\CORE_RL_librsvg_.dll
+		Pliki\Release\CORE_RL_libxml_.dll = Pliki\Release\CORE_RL_libxml_.dll
+		Pliki\Release\CORE_RL_lqr_.dll = Pliki\Release\CORE_RL_lqr_.dll
+		Pliki\Release\CORE_RL_Magick++_.dll = Pliki\Release\CORE_RL_Magick++_.dll
+		Pliki\Release\CORE_RL_magick_.dll = Pliki\Release\CORE_RL_magick_.dll
+		Pliki\Release\CORE_RL_openjpeg_.dll = Pliki\Release\CORE_RL_openjpeg_.dll
+		Pliki\Release\CORE_RL_pango_.dll = Pliki\Release\CORE_RL_pango_.dll
+		Pliki\Release\CORE_RL_png_.dll = Pliki\Release\CORE_RL_png_.dll
+		Pliki\Release\CORE_RL_tiff_.dll = Pliki\Release\CORE_RL_tiff_.dll
+		Pliki\Release\CORE_RL_ttf_.dll = Pliki\Release\CORE_RL_ttf_.dll
+		Pliki\Release\CORE_RL_wand_.dll = Pliki\Release\CORE_RL_wand_.dll
+		Pliki\Release\CORE_RL_webp_.dll = Pliki\Release\CORE_RL_webp_.dll
+		Pliki\Release\CORE_RL_zlib_.dll = Pliki\Release\CORE_RL_zlib_.dll
+		Pliki\Release\dcraw.exe = Pliki\Release\dcraw.exe
+		Pliki\Release\jpeg62.dll = Pliki\Release\jpeg62.dll
+		Pliki\Release\libexiv2.dll = Pliki\Release\libexiv2.dll
+		Pliki\Release\libexpat.dll = Pliki\Release\libexpat.dll
+		Pliki\Release\libpng12.dll = Pliki\Release\libpng12.dll
+		Pliki\Release\tiff.dll = Pliki\Release\tiff.dll
+		Pliki\Release\zlib1.dll = Pliki\Release\zlib1.dll
+	EndProjectSection
 EndProject
 Global
+	GlobalSection(SourceCodeControl) = preSolution
+		SccNumberOfProjects = 4
+		SccLocalPath0 = .
+		CanCheckoutShared = false
+		SccProjectUniqueName1 = pHash\\pHash.vcxproj
+		SccLocalPath1 = .
+		SccProjectFilePathRelativizedFromConnection1 = pHash\\
+		SccProjectUniqueName2 = pHashWrapper\\pHashWrapper.vcxproj
+		SccLocalPath2 = .
+		SccProjectFilePathRelativizedFromConnection2 = pHashWrapper\\
+		SccProjectUniqueName3 = Tst\\Tst.vcxproj
+		SccLocalPath3 = .
+		SccProjectFilePathRelativizedFromConnection3 = Tst\\
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
@@ -33,5 +111,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{71B68D84-FD4E-4948-8E12-DC05B2B25229} = {24FAA31D-1E05-4F52-8C0B-3B7D12C05909}
+		{4CEE0B7F-2001-4DF0-8116-F5E0FCC59490} = {24FAA31D-1E05-4F52-8C0B-3B7D12C05909}
 	EndGlobalSection
 EndGlobal

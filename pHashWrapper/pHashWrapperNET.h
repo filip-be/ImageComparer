@@ -4,7 +4,7 @@
 
 using namespace System;
 
-namespace pHashWrapper {
+namespace pHashWrapperNET {
 
 	public ref class Class1
 	{

@@ -123,14 +123,16 @@ void AnalizeListWithTemplate(IFList &lTemplate, IFList &lBad, const double &eQua
 /////////////////////////////////////////////////////////////////////////////////////////
 void usageInfo()
 {
-	std::printf("Usage: <this> <dir> [<dir2>] [-brq:e:]\n\n");
+	std::printf("Usage: <this> <dir> [<dir2>] [-brlsq:e:]\n\n");
 	std::printf("Arguments:\n");
 	std::printf("-b\t- run in batch mode\n");
 	std::printf("-r\t- allow image rotation\n");
+	std::printf("-l\t- use file lists\n");
 	std::printf("-s\t- files with smaller size will be treated as duplicates\n");
 	std::printf("-q\t- eQuality parameter. DEFAULT: 5.00\n");
 	std::printf("-e LIST\t- extension (one or more) of files to validate\n");
 	std::printf(" DEFAULT: -e .jpg;.jpeg;.png;.crw;.cr2;.raf;.mrw;.raw;.nef;.orf;.pef;.x3f;.arw;.sr2;.srf;.rw2;\n\n");
+	std::printf("DEFAULT USAGE: ImageComparerCmd <dir> [<dir2>] -rl \n\n");
 	if (!batch)
 		system("PAUSE");
 }
@@ -143,7 +145,7 @@ void ProgressAnalyzeUpdate(const __int64&counter, const __int64&count)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	printf("ImageComparer v.1.11 by HDLAB 2015-2016 (Unicode & Long Path (partially?) supported)\n\n");
+	printf("ImageComparer v.1.2 by HDLAB 2015-2016 (Unicode & Long Path (partially?) supported)\n\n");
 
 	// Sprawdzenie parametrow
 	if (argc<2)
@@ -157,6 +159,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	bool ImageCanBeRotated = false;
 	bool MoveSmaller = false;
+	bool UseLists = false;
 	double eQuality = 5;
 	CString strMaskExt = L".jpg;.jpeg;.png;.crw;.cr2;.raf;.mrw;.raw;.nef;.orf;.pef;.x3f;.arw;.sr2;.srf;.rw2;";
 
@@ -186,7 +189,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	CString tempString = L"";
-	while ((c = getopt(argc, argv, _T("sbrq:e:"))) != -1)
+	while ((c = getopt(argc, argv, _T("sblrq:e:"))) != -1)
 	switch (c)
 	{
 		case 's':
@@ -196,6 +199,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		case 'b':
 			batch = true;
 			printf("Batch mode activated...\n");
+			break;
+		case 'l':
+			UseLists = true;
+			printf("Will use file lists...\n");
 			break;
 		case 'r':
 			ImageCanBeRotated = true;
@@ -268,10 +275,22 @@ int _tmain(int argc, _TCHAR* argv[])
 		std::printf("ERROR WHILE OPENING LOG FILE %S!!!\n\n", pom.GetBuffer());
 	}
 
+	if (UseLists)
+	{
+		GetFileNameFromPath(strDir);
+		
+
+		if (strDir2.GetLength() > 0)
+		{
+			GetFileNameFromPath(strDir2);
+		}
+		
+	}
+
 	std::printf("Analyzing %S...\n", strDir.GetBuffer());
 	IFList lFiles;
 	time_t lFilesSize = 0;
-	if (AnalyzeDirectory(strDir, "*.*", strMaskExt, lFiles, ImageCanBeRotated, *ProgressAnalyzeUpdate, logFile))
+	if (AnalyzeDirectory(strDir, "*.*", strMaskExt, lFiles, ImageCanBeRotated, *ProgressAnalyzeUpdate, logFile, UseLists))
 	{
 		std::printf("\nDone!\n\n");
 	}
@@ -280,7 +299,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		std::printf("Analyzing %S...\n", strDir2.GetBuffer());
 		IFList lFiles2;
-		if (AnalyzeDirectory(strDir2, "*.*", strMaskExt, lFiles2, ImageCanBeRotated, *ProgressAnalyzeUpdate, logFile))
+		if (AnalyzeDirectory(strDir2, "*.*", strMaskExt, lFiles2, ImageCanBeRotated, *ProgressAnalyzeUpdate, logFile, UseLists))
 		{
 			std::printf("\nDone!\n\n");
 		}
@@ -296,7 +315,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		AnalyzeSingleList(lFiles, eQuality, logFile, MoveSmaller);
 		lFiles.clear();
 	}
-	
 
 	std::printf("\n\nFiles validating complete !!!\n\n");
 	

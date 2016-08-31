@@ -2,5 +2,5 @@
 
 #include "stdafx.h"
 
-#include "pHashWrapper.h"
+#include "pHashWrapperNET.h"
 

@@ -5,6 +5,7 @@
 #include "pHash.h"
 #include <vector>
 #include <list>
+#include <boost/container/map.hpp> // for boost::containter::map
 //#include "mvptree.h"
 
 #define _MAX_BUFFER 20000000
@@ -15,7 +16,7 @@ public:
 	CStringW			fName;
 	LARGE_INTEGER		fSize;
 	unsigned int		fCRC;
-	FILETIME			fDate;
+	__time64_t			fDate;
 	int					iWidth;
 	int					iHeight;
 	ulong64				iHash[4];
@@ -24,23 +25,24 @@ public:
 	long				eWidth;
 	long				eLength;
 	CStringW			eMakeModel;
-	time_t				eDateTimeOriginal;
+	__time64_t			eDateTimeOriginal;
 
 	bool				ImageCanBeRotated;
 
 	CImageFile();
-	CImageFile(CStringW file, bool _ImageCanBeRotated);
+	CImageFile(CStringW file, bool _ImageCanBeRotated, bool _CalculateHash);
 	bool ReadExif();
 	bool CalculateHash();
 	bool CalculateCRC();
-	bool Initialize(CStringW file, bool _ImageCanBeRotated);
+	bool Initialize(CStringW file, bool _ImageCanBeRotated, bool _CalculateHash);
 	bool IsSimiliar(const CImageFile &obj, const double &eQuality);
 };
+
+__time64_t filetime_to_timet(FILETIME const& ft);
 
 __declspec(dllexport) bool GetShortPathNameANSI(wchar_t *unicodestr, int lenW, char **ansistr, bool removeUnicodeAddon=false);
 
 typedef void(*ProgressUpdateCallback)(const __int64&, const __int64&);
-
 
 __declspec(dllexport) typedef	vector< CStringW >FileVector;
 
@@ -65,6 +67,16 @@ __declspec(dllexport) bool FileMove(CStringW strSrc, CStringW strDst);
 /// <summary>Analiza katalogu</summary>
 __declspec(dllexport) bool AnalyzeDirectory(CStringW strDir, CStringW strMask, const CStringW &strExt,
 	std::list<CImageFile> &imageList, bool _ImageCanBeRotated,
-	ProgressUpdateCallback ProgressUpdate, FILE *logFile);
+	ProgressUpdateCallback ProgressUpdate, FILE *logFile,
+	bool UseList);
+
+/// <summary>Wczytanie listy</summary>
+__declspec(dllexport) bool ReadList(boost::container::map<CStringW, CImageFile> &imageList, CStringW strDir, CStringW fileName);
+
+/// <summary>Zapisanie list do pliku</summary>
+__declspec(dllexport) bool SaveList(std::list<CImageFile> &imageList, CStringW strDir, CStringW fileName);
+
+/// <summary>Pobranie nazwy pliku/katalogu ze œcie¿ki</summary>
+__declspec(dllexport) CStringW GetFileNameFromPath(CStringW path);
 
 #endif
